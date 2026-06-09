@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAVEEN_L :: QA_ENGINEER // SYSTEM</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Bebas+Neue&family=Oxanium:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --neon-green: #00ff41;
+    --neon-green-dim: #00cc33;
+    --neon-green-glow: rgba(0, 255, 65, 0.3);
+    --cyan: #00e5ff;
+    --cyan-dim: #00b8cc;
+    --cyan-glow: rgba(0, 229, 255, 0.25);
+    --amber: #ffb300;
+    --amber-dim: #cc8f00;
+    --amber-glow: rgba(255, 179, 0, 0.25);
+    --bg-void: #020b04;
+    --bg-dark: #050f07;
+    --bg-panel: #071209;
+    --bg-card: #0a1a0c;
+    --bg-highlight: #0d2010;
+    --border-dim: rgba(0, 255, 65, 0.15);
+    --border-mid: rgba(0, 255, 65, 0.3);
+    --border-bright: rgba(0, 255, 65, 0.6);
+    --text-dim: rgba(0, 255, 65, 0.5);
+    --text-mid: rgba(0, 255, 65, 0.75);
+    --scanline-size: 3px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg-void);
+    color: var(--neon-green);
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CURSOR */
+  #cursor {
+    position: fixed; width: 20px; height: 20px;
+    border: 1.5px solid var(--neon-green); border-radius: 50%;
+    pointer-events: none; z-index: 99999;
+    transform: translate(-50%, -50%);
+    transition: width .15s, height .15s, border-color .15s;
+    box-shadow: 0 0 8px var(--neon-green-glow); mix-blend-mode: screen;
+  }
+  #cursor-dot {
+    position: fixed; width: 4px; height: 4px; background: var(--neon-green);
+    border-radius: 50%; pointer-events: none; z-index: 99999;
+    transform: translate(-50%, -50%);
+  }
+
+  /* SCANLINES */
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent calc(var(--scanline-size) - 1px), rgba(0,0,0,0.18) var(--scanline-size));
+    pointer-events: none; z-index: 9998; animation: scanlineShift 8s linear infinite;
+  }
+  @keyframes scanlineShift { from { background-position: 0 0; } to { background-position: 0 100px; } }
+
+  /* BIOS */
+  #bios {
+    position: fixed; inset: 0; background: #000; z-index: 9999;
+    display: flex; flex-direction: column; padding: 2rem 3rem;
+    font-family: 'JetBrains Mono', monospace; font-size: .78rem; color: #ccc; overflow: hidden;
+  }
+  .bios-line { line-height: 1.8; opacity: 0; animation: biosReveal .05s forwards; }
+  @keyframes biosReveal { to { opacity: 1; } }
+  .bios-green { color: var(--neon-green); }
+  .bios-amber { color: var(--amber); }
+  .bios-cyan  { color: var(--cyan); }
+  .bios-bar-wrap { margin: .4rem 0; width: 340px; height: 14px; border: 1px solid #444; position: relative; }
+  .bios-bar-fill { height: 100%; background: var(--neon-green); width: 0%; transition: width .05s linear; box-shadow: 0 0 8px var(--neon-green); }
+  .bios-bar-pct { position: absolute; right: 4px; top: 0; font-size: .7rem; color: var(--neon-green); }
+
+  /* NAVBAR */
+  #navbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 44px;
+    background: rgba(5,15,7,0.95); border-bottom: 1px solid var(--border-mid);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 1.5rem; z-index: 1000; backdrop-filter: blur(12px);
+    box-shadow: 0 0 20px rgba(0,255,65,0.1);
+  }
+  .nav-left { display: flex; align-items: center; gap: 1.5rem; }
+  .nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: .15em; color: var(--neon-green); text-shadow: 0 0 12px var(--neon-green-glow); }
+  .nav-logo span { color: var(--cyan); }
+  .nav-links { display: flex; align-items: center; gap: .1rem; list-style: none; }
+  .nav-links a { font-size: .65rem; color: var(--text-mid); text-decoration: none; padding: .3rem .8rem; border: 1px solid transparent; letter-spacing: .1em; transition: all .2s; text-transform: uppercase; }
+  .nav-links a:hover { color: var(--neon-green); border-color: var(--border-mid); background: var(--bg-highlight); text-shadow: 0 0 8px var(--neon-green-glow); }
+  .nav-right { display: flex; align-items: center; gap: 1rem; font-size: .65rem; color: var(--text-dim); }
+  .nav-status { display: flex; align-items: center; gap: .4rem; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--neon-green); box-shadow: 0 0 6px var(--neon-green); animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;box-shadow:0 0 6px var(--neon-green);} 50%{opacity:.4;box-shadow:none;} }
+  #live-clock { color: var(--amber); letter-spacing: .05em; font-size: .7rem; }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    justify-content: center; align-items: flex-start;
+    padding: 6rem 5vw 3rem; position: relative; overflow: hidden;
+  }
+  #hero::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: linear-gradient(var(--border-dim) 1px, transparent 1px), linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%);
+    pointer-events: none;
+  }
+  .bracket-tl, .bracket-br { position: absolute; width: 60px; height: 60px; pointer-events: none; }
+  .bracket-tl { top: 5rem; left: 5vw; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); opacity: .5; }
+  .bracket-br { bottom: 3rem; right: 5vw; border-bottom: 2px solid var(--amber); border-right: 2px solid var(--amber); opacity: .5; }
+  .hero-tag { font-size: .7rem; color: var(--cyan); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 1rem; opacity: .8; }
+  .hero-tag::before { content: '[ '; } .hero-tag::after { content: ' ]'; }
+  .hero-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 12vw, 9rem); line-height: .9;
+    color: var(--neon-green); text-shadow: 0 0 30px var(--neon-green-glow), 0 0 60px var(--neon-green-glow);
+    position: relative; letter-spacing: .04em;
+  }
+  .hero-name::before, .hero-name::after { content: attr(data-text); position: absolute; inset: 0; font-family: inherit; font-size: inherit; }
+  .hero-name::before { color: var(--cyan); clip-path: polygon(0 30%,100% 30%,100% 50%,0 50%); animation: glitch1 3.5s infinite steps(1); text-shadow: none; }
+  .hero-name::after  { color: var(--amber); clip-path: polygon(0 60%,100% 60%,100% 75%,0 75%); animation: glitch2 4.1s infinite steps(1); text-shadow: none; }
+  @keyframes glitch1 { 0%,90%,100%{transform:translate(0);opacity:0;} 91%{transform:translate(-4px,2px);opacity:1;} 93%{transform:translate(4px,-2px);opacity:1;} 95%{transform:translate(0);opacity:0;} }
+  @keyframes glitch2 { 0%,85%,100%{transform:translate(0);opacity:0;} 86%{transform:translate(5px,1px);opacity:1;} 88%{transform:translate(-5px,-1px);opacity:1;} 90%{transform:translate(0);opacity:0;} }
+  .hero-sub { font-family: 'Oxanium', sans-serif; font-size: clamp(1rem,2.5vw,1.6rem); color: var(--cyan); letter-spacing: .3em; text-transform: uppercase; margin: .6rem 0 2rem; font-weight: 300; }
+  .hero-terminal { background: var(--bg-panel); border: 1px solid var(--border-mid); border-radius: 6px; width: min(580px,90vw); box-shadow: 0 0 30px rgba(0,255,65,0.08), inset 0 0 20px rgba(0,0,0,0.5); overflow: hidden; }
+  .term-titlebar { background: var(--bg-highlight); border-bottom: 1px solid var(--border-dim); padding: .5rem .8rem; display: flex; align-items: center; gap: .5rem; font-size: .65rem; color: var(--text-dim); }
+  .term-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r{background:#ff5f57;} .dot-y{background:#febc2e;} .dot-g{background:#28c840;}
+  .term-title { margin-left: .5rem; letter-spacing: .1em; }
+  .term-body { padding: 1rem 1.2rem; font-size: .78rem; line-height: 1.9; min-height: 160px; }
+  .term-line { color: var(--text-mid); }
+  .term-line .prompt { color: var(--neon-green); }
+  .term-line .cmd { color: var(--cyan); }
+  .term-cursor { display: inline-block; width: 9px; height: 1.1em; background: var(--neon-green); vertical-align: text-bottom; margin-left: 2px; animation: blink .7s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .hero-badges { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.8rem; }
+  .badge { font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; padding: .3rem .8rem; border: 1px solid; font-family: 'JetBrains Mono', monospace; }
+  .badge-g { border-color: var(--neon-green); color: var(--neon-green); background: rgba(0,255,65,0.05); }
+  .badge-c { border-color: var(--cyan); color: var(--cyan); background: rgba(0,229,255,0.05); }
+  .badge-a { border-color: var(--amber); color: var(--amber); background: rgba(255,179,0,0.05); }
+  .scroll-hint { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); font-size: .6rem; color: var(--text-dim); letter-spacing: .2em; text-transform: uppercase; display: flex; flex-direction: column; align-items: center; gap: .4rem; }
+  .scroll-arrow { width: 1px; height: 30px; background: linear-gradient(to bottom, var(--neon-green), transparent); animation: scrollDown 1.5s ease-in-out infinite; }
+  @keyframes scrollDown { 0%,100%{opacity:1;transform:translateY(0);} 50%{opacity:.3;transform:translateY(10px);} }
+
+  /* SECTIONS */
+  section { padding: 5rem 5vw; }
+  .section-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 3rem; }
+  .sec-num { font-size: .65rem; color: var(--amber); letter-spacing: .15em; font-family: 'Oxanium', sans-serif; font-weight: 600; }
+  .sec-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(1.8rem,4vw,2.8rem); color: var(--neon-green); letter-spacing: .1em; text-shadow: 0 0 20px var(--neon-green-glow); }
+  .sec-line { flex: 1; height: 1px; background: linear-gradient(to right, var(--border-mid), transparent); }
+
+  /* ABOUT */
+  #about { background: var(--bg-dark); }
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+  @media(max-width:700px){ .about-grid { grid-template-columns: 1fr; } }
+  .about-card { background: var(--bg-card); border: 1px solid var(--border-dim); border-radius: 4px; padding: 1.5rem; position: relative; transition: border-color .2s, box-shadow .2s; }
+  .about-card:hover { border-color: var(--border-bright); box-shadow: 0 0 20px var(--neon-green-glow); }
+  .about-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); border-radius: 4px 0 0 4px; }
+  .card-label { font-size: .6rem; letter-spacing: .2em; color: var(--amber); text-transform: uppercase; margin-bottom: .8rem; }
+  .card-text { font-size: .78rem; color: #aaa; line-height: 1.9; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .stat-item { text-align: center; padding: .8rem; background: var(--bg-highlight); border-radius: 3px; }
+  .stat-num { font-family: 'Oxanium', sans-serif; font-size: 1.6rem; color: var(--cyan); font-weight: 800; text-shadow: 0 0 15px var(--cyan-glow); }
+  .stat-lbl { font-size: .6rem; color: var(--text-dim); letter-spacing: .12em; text-transform: uppercase; margin-top: .2rem; }
+
+  /* SKILLS */
+  #skills { background: var(--bg-void); }
+  .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; }
+  .skill-block { background: var(--bg-panel); border: 1px solid var(--border-dim); border-radius: 4px; padding: 1.2rem 1.5rem; transition: all .25s; position: relative; overflow: hidden; }
+  .skill-block::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 60%, rgba(0,255,65,0.03) 100%); }
+  .skill-block:hover { border-color: var(--neon-green-dim); box-shadow: 0 0 25px rgba(0,255,65,0.1), inset 0 0 15px rgba(0,255,65,0.04); transform: translateY(-2px); }
+  .skill-category { font-size: .62rem; letter-spacing: .2em; text-transform: uppercase; color: var(--amber); margin-bottom: .7rem; transition: color .2s; }
+  .skill-block:hover .skill-category { color: var(--neon-green); }
+  .skill-tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .stag { font-size: .65rem; padding: .2rem .6rem; border: 1px solid; border-radius: 2px; letter-spacing: .05em; transition: all .2s; }
+  .stag-g { border-color: rgba(0,255,65,.3); color: var(--neon-green-dim); }
+  .stag-c { border-color: rgba(0,229,255,.3); color: var(--cyan-dim); }
+  .stag-a { border-color: rgba(255,179,0,.3); color: var(--amber-dim); }
+  .stag:hover { box-shadow: 0 0 8px currentColor; }
+  .skill-bar-row { margin-top: .6rem; }
+  .sbr-label { font-size: .62rem; color: var(--text-mid); margin-bottom: .25rem; display: flex; justify-content: space-between; }
+  .sbr-track { height: 3px; background: var(--bg-highlight); border-radius: 2px; overflow: hidden; }
+  .sbr-fill { height: 100%; border-radius: 2px; animation: fillBar 1.5s ease forwards; }
+  .fill-g { background: linear-gradient(90deg, var(--neon-green), var(--neon-green-dim)); box-shadow: 0 0 6px var(--neon-green-glow); }
+  .fill-c { background: linear-gradient(90deg, var(--cyan), var(--cyan-dim)); box-shadow: 0 0 6px var(--cyan-glow); }
+  .fill-a { background: linear-gradient(90deg, var(--amber), var(--amber-dim)); box-shadow: 0 0 6px var(--amber-glow); }
+  @keyframes fillBar { from { width: 0 !important; } }
+
+  /* PROJECTS */
+  #projects { background: var(--bg-dark); }
+  .proj-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+  .proj-card { background: var(--bg-panel); border: 1px solid var(--border-dim); border-radius: 6px; padding: 1.5rem; transition: all .25s; display: flex; flex-direction: column; gap: .8rem; position: relative; overflow: hidden; }
+  .proj-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+  .proj-card.pc-g::before { background: var(--neon-green); }
+  .proj-card.pc-c::before { background: var(--cyan); }
+  .proj-card.pc-a::before { background: var(--amber); }
+  .proj-card:hover { transform: translateY(-3px); }
+  .proj-card.pc-g:hover { border-color: rgba(0,255,65,.4); box-shadow: 0 8px 30px rgba(0,255,65,.12); }
+  .proj-card.pc-c:hover { border-color: rgba(0,229,255,.4); box-shadow: 0 8px 30px rgba(0,229,255,.12); }
+  .proj-card.pc-a:hover { border-color: rgba(255,179,0,.4); box-shadow: 0 8px 30px rgba(255,179,0,.12); }
+  .proj-id { font-size: .6rem; letter-spacing: .2em; text-transform: uppercase; }
+  .pid-g{color:var(--neon-green-dim);} .pid-c{color:var(--cyan-dim);} .pid-a{color:var(--amber-dim);}
+  .proj-title { font-family: 'Oxanium', sans-serif; font-size: 1rem; font-weight: 600; color: #e0e0e0; letter-spacing: .05em; }
+  .proj-stack { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .proj-chip { font-size: .58rem; padding: .15rem .5rem; border-radius: 2px; font-family: 'JetBrains Mono', monospace; }
+  .chip-g{background:rgba(0,255,65,.1);color:var(--neon-green);border:1px solid rgba(0,255,65,.2);}
+  .chip-c{background:rgba(0,229,255,.1);color:var(--cyan);border:1px solid rgba(0,229,255,.2);}
+  .chip-a{background:rgba(255,179,0,.1);color:var(--amber);border:1px solid rgba(255,179,0,.2);}
+  .proj-bullets { list-style: none; }
+  .proj-bullets li { font-size: .72rem; color: #999; line-height: 1.8; padding-left: 1rem; position: relative; }
+  .proj-bullets li::before { content: '▸'; position: absolute; left: 0; color: var(--neon-green-dim); font-size: .65rem; }
+
+  /* EDUCATION */
+  #education { background: var(--bg-void); }
+  .timeline { position: relative; padding-left: 1.5rem; }
+  .timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, var(--neon-green), var(--cyan), transparent); }
+  .tl-item { position: relative; padding: 0 0 2.5rem 2rem; }
+  .tl-dot { position: absolute; left: -1.67rem; top: .3rem; width: 12px; height: 12px; border: 2px solid var(--neon-green); border-radius: 50%; background: var(--bg-void); box-shadow: 0 0 8px var(--neon-green); }
+  .tl-year { font-size: .62rem; color: var(--amber); letter-spacing: .15em; text-transform: uppercase; margin-bottom: .3rem; }
+  .tl-title { font-family: 'Oxanium', sans-serif; font-size: 1.05rem; font-weight: 600; color: var(--neon-green); margin-bottom: .15rem; }
+  .tl-org { font-size: .75rem; color: var(--cyan-dim); margin-bottom: .4rem; }
+  .tl-detail { font-size: .72rem; color: #888; line-height: 1.8; }
+  .tl-grade { display: inline-block; margin-top: .5rem; font-size: .7rem; color: var(--amber); border: 1px solid rgba(255,179,0,.3); padding: .15rem .6rem; border-radius: 2px; }
+
+  /* CONTACT */
+  #contact { background: var(--bg-dark); }
+  .contact-wrap { display: grid; grid-template-columns: 1fr 1.2fr; gap: 3rem; align-items: start; }
+  @media(max-width:750px){ .contact-wrap { grid-template-columns: 1fr; } }
+  .contact-info { display: flex; flex-direction: column; gap: 1rem; }
+  .contact-item { display: flex; align-items: flex-start; gap: .8rem; padding: .9rem 1rem; background: var(--bg-panel); border: 1px solid var(--border-dim); border-radius: 4px; transition: border-color .2s, box-shadow .2s; }
+  .contact-item:hover { border-color: var(--border-bright); box-shadow: 0 0 15px var(--neon-green-glow); }
+  .ci-icon { font-size: 1rem; min-width: 20px; text-align: center; }
+  .ci-label { font-size: .58rem; letter-spacing: .15em; color: var(--text-dim); text-transform: uppercase; }
+  .ci-val { font-size: .78rem; color: var(--neon-green); margin-top: .1rem; }
+  .ci-val a { color: inherit; text-decoration: none; }
+  .ci-val a:hover { text-decoration: underline; }
+  .int-terminal { background: var(--bg-panel); border: 1px solid var(--border-mid); border-radius: 6px; overflow: hidden; box-shadow: 0 0 40px rgba(0,255,65,0.08); }
+  .int-titlebar { background: var(--bg-highlight); border-bottom: 1px solid var(--border-dim); padding: .5rem 1rem; display: flex; align-items: center; gap: .5rem; font-size: .65rem; color: var(--text-dim); }
+  .int-body { padding: 1rem; font-size: .75rem; height: 380px; overflow-y: auto; display: flex; flex-direction: column; }
+  #term-output { flex: 1; display: flex; flex-direction: column; gap: .15rem; }
+  .to-line { line-height: 1.8; }
+  .to-prompt { color: var(--neon-green); }
+  .to-cmd { color: var(--cyan); }
+  .to-resp { color: #aaa; }
+  .to-err { color: #ff5f57; }
+  .to-ok { color: var(--neon-green); }
+  .to-info { color: var(--amber); }
+  .term-input-row { display: flex; align-items: center; gap: .5rem; margin-top: .5rem; border-top: 1px solid var(--border-dim); padding-top: .5rem; }
+  .ti-prompt { color: var(--neon-green); font-size: .75rem; white-space: nowrap; }
+  #term-input { flex: 1; background: transparent; border: none; outline: none; color: var(--cyan); font-family: 'JetBrains Mono', monospace; font-size: .75rem; caret-color: var(--neon-green); }
+
+  /* FOOTER */
+  footer { background: var(--bg-void); border-top: 1px solid var(--border-dim); padding: 1.5rem 5vw; display: flex; justify-content: space-between; align-items: center; font-size: .65rem; color: var(--text-dim); flex-wrap: wrap; gap: .5rem; }
+  footer span { letter-spacing: .1em; }
+  footer .ft-right { color: var(--neon-green-dim); }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg-void); }
+  ::-webkit-scrollbar-thumb { background: var(--neon-green-dim); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-dot"></div>
+
+<!-- BIOS -->
+<div id="bios"><div id="bios-content"></div></div>
+
+<!-- NAVBAR -->
+<nav id="navbar" style="opacity:0;pointer-events:none;">
+  <div class="nav-left">
+    <div class="nav-logo">NAV<span>OS</span></div>
+    <ul class="nav-links">
+      <li><a href="#about">./about</a></li>
+      <li><a href="#skills">./skills</a></li>
+      <li><a href="#projects">./projects</a></li>
+      <li><a href="#education">./edu</a></li>
+      <li><a href="#contact">./contact</a></li>
+    </ul>
+  </div>
+  <div class="nav-right">
+    <div class="nav-status"><div class="status-dot"></div><span>SYS_ONLINE</span></div>
+    <span>|</span>
+    <div id="live-clock">00:00:00</div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="bracket-tl"></div>
+  <div class="bracket-br"></div>
+  <p class="hero-tag">QA_ENGINEER // AUTOMATION_TESTER</p>
+  <h1 class="hero-name" data-text="NAVEEN L">NAVEEN L</h1>
+  <p class="hero-sub">Software Tester &nbsp;/&nbsp; Defect Hunter &nbsp;/&nbsp; Quality Sentinel</p>
+  <div class="hero-terminal">
+    <div class="term-titlebar">
+      <div class="term-dot dot-r"></div><div class="term-dot dot-y"></div><div class="term-dot dot-g"></div>
+      <span class="term-title">naveen@qa-engine:~$</span>
+    </div>
+    <div class="term-body" id="hero-term-body"></div>
+  </div>
+  <div class="hero-badges">
+    <span class="badge badge-g">Manual QA</span>
+    <span class="badge badge-c">Selenium</span>
+    <span class="badge badge-a">TestNG</span>
+    <span class="badge badge-g">JIRA</span>
+    <span class="badge badge-c">SQL</span>
+    <span class="badge badge-a">Postman</span>
+    <span class="badge badge-g">Java</span>
+    <span class="badge badge-c">POM</span>
+  </div>
+  <div class="scroll-hint"><span>SCROLL</span><div class="scroll-arrow"></div></div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-header">
+    <span class="sec-num">// 01</span>
+    <h2 class="sec-title">ABOUT.EXE</h2>
+    <div class="sec-line"></div>
+  </div>
+  <div class="about-grid">
+    <div class="about-card">
+      <p class="card-label">$ cat career_objective.txt</p>
+      <p class="card-text">Certified Software Testing professional with hands-on training in Manual Testing, Selenium WebDriver Automation, and SQL. Detail-oriented, a quick learner, and passionate about building defect-free software through structured testing processes and root-cause analysis.</p>
+    </div>
+    <div class="about-card" style="border-left:none;">
+      <p class="card-label">$ ./system_info --personal</p>
+      <div class="stat-grid">
+        <div class="stat-item"><div class="stat-num">50+</div><div class="stat-lbl">Test Cases Designed</div></div>
+        <div class="stat-item"><div class="stat-num">20+</div><div class="stat-lbl">Defects Reported</div></div>
+        <div class="stat-item"><div class="stat-num">3</div><div class="stat-lbl">Major Projects</div></div>
+        <div class="stat-item"><div class="stat-num">79%</div><div class="stat-lbl">B.Sc CS Score</div></div>
+      </div>
+      <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:.4rem;">
+        <span class="badge badge-g" style="font-size:.58rem;">📍 Bangalore, India</span>
+        <span class="badge badge-c" style="font-size:.58rem;">⚡ Immediate Joiner</span>
+        <span class="badge badge-a" style="font-size:.58rem;">🌐 English + Tamil</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="section-header">
+    <span class="sec-num">// 02</span>
+    <h2 class="sec-title">SKILL_MATRIX</h2>
+    <div class="sec-line"></div>
+  </div>
+  <div class="skills-grid">
+    <div class="skill-block">
+      <p class="skill-category">⬡ Testing Types</p>
+      <div class="skill-tags">
+        <span class="stag stag-g">Manual Testing</span><span class="stag stag-g">Functional</span>
+        <span class="stag stag-g">Regression</span><span class="stag stag-g">Smoke</span>
+        <span class="stag stag-g">Sanity</span><span class="stag stag-g">UAT</span><span class="stag stag-g">Black-Box</span>
+      </div>
+    </div>
+    <div class="skill-block">
+      <p class="skill-category">⬡ Automation Stack</p>
+      <div class="skill-bar-row"><div class="sbr-label"><span>Selenium WebDriver</span><span style="color:var(--neon-green)">85%</span></div><div class="sbr-track"><div class="sbr-fill fill-g" style="width:85%"></div></div></div>
+      <div class="skill-bar-row"><div class="sbr-label"><span>TestNG</span><span style="color:var(--neon-green)">80%</span></div><div class="sbr-track"><div class="sbr-fill fill-g" style="width:80%"></div></div></div>
+      <div class="skill-bar-row"><div class="sbr-label"><span>Page Object Model</span><span style="color:var(--neon-green)">78%</span></div><div class="sbr-track"><div class="sbr-fill fill-g" style="width:78%"></div></div></div>
+      <div class="skill-bar-row"><div class="sbr-label"><span>Data-Driven Testing</span><span style="color:var(--neon-green)">72%</span></div><div class="sbr-track"><div class="sbr-fill fill-g" style="width:72%"></div></div></div>
+    </div>
+    <div class="skill-block">
+      <p class="skill-category">⬡ Languages</p>
+      <div class="skill-bar-row"><div class="sbr-label"><span>Java</span><span style="color:var(--cyan)">80%</span></div><div class="sbr-track"><div class="sbr-fill fill-c" style="width:80%"></div></div></div>
+      <div class="skill-bar-row"><div class="sbr-label"><span>Python (Basic)</span><span style="color:var(--cyan)">40%</span></div><div class="sbr-track"><div class="sbr-fill fill-c" style="width:40%"></div></div></div>
+      <div class="skill-bar-row"><div class="sbr-label"><span>HTML (Basic)</span><span style="color:var(--cyan)">45%</span></div><div class="sbr-track"><div class="sbr-fill fill-c" style="width:45%"></div></div></div>
+    </div>
+    <div class="skill-block">
+      <p class="skill-category">⬡ Databases</p>
+      <div class="skill-tags" style="margin-bottom:.8rem;">
+        <span class="stag stag-a">MySQL</span><span class="stag stag-a">Oracle SQL</span><span class="stag stag-a">JDBC</span>
+      </div>
+      <div class="skill-bar-row"><div class="sbr-label"><span>SQL Proficiency</span><span style="color:var(--amber)">72%</span></div><div class="sbr-track"><div class="sbr-fill fill-a" style="width:72%"></div></div></div>
+    </div>
+    <div class="skill-block">
+      <p class="skill-category">⬡ QA Concepts</p>
+      <div class="skill-tags">
+        <span class="stag stag-g">STLC</span><span class="stag stag-g">SDLC</span><span class="stag stag-g">Bug Life Cycle</span>
+        <span class="stag stag-g">Test Plan</span><span class="stag stag-g">BVA</span>
+        <span class="stag stag-g">Equivalence Partitioning</span><span class="stag stag-g">Root Cause Analysis</span>
+      </div>
+    </div>
+    <div class="skill-block">
+      <p class="skill-category">⬡ Tools &amp; Platforms</p>
+      <div class="skill-tags">
+        <span class="stag stag-c">JIRA</span><span class="stag stag-c">Postman</span><span class="stag stag-c">Eclipse IDE</span>
+        <span class="stag stag-c">MySQL Workbench</span><span class="stag stag-c">Git</span>
+        <span class="stag stag-c">MS Excel</span><span class="stag stag-c">ChromeDriver</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-header">
+    <span class="sec-num">// 03</span>
+    <h2 class="sec-title">PROJECTS.LOG</h2>
+    <div class="sec-line"></div>
+  </div>
+  <div class="proj-grid">
+    <div class="proj-card pc-g">
+      <p class="proj-id pid-g">PROJECT :: 001</p>
+      <p class="proj-title">Expense Manager Application</p>
+      <div class="proj-stack">
+        <span class="proj-chip chip-g">Java</span><span class="proj-chip chip-g">Oracle SQL</span>
+        <span class="proj-chip chip-g">JDBC</span><span class="proj-chip chip-g">Eclipse</span><span class="proj-chip chip-g">Java Swing</span>
+      </div>
+      <ul class="proj-bullets">
+        <li>Desktop app with full CRUD operations — add, update, delete, and view expense records</li>
+        <li>Designed intuitive UI using Java Swing for smooth user interaction</li>
+        <li>Implemented backend with Oracle SQL and JDBC for persistent storage</li>
+        <li>Applied input validation and error handling for data integrity and accurate reports</li>
+      </ul>
+    </div>
+    <div class="proj-card pc-c">
+      <p class="proj-id pid-c">PROJECT :: 002</p>
+      <p class="proj-title">Manual Testing – OpenCart E-Commerce</p>
+      <div class="proj-stack">
+        <span class="proj-chip chip-c">JIRA</span><span class="proj-chip chip-c">Excel</span>
+        <span class="proj-chip chip-c">Manual QA</span><span class="proj-chip chip-c">BVA</span>
+      </div>
+      <ul class="proj-bullets">
+        <li>Prepared detailed Test Plan covering scope, objectives, and entry/exit criteria</li>
+        <li>Designed and executed 50+ test cases across Login, Cart, Checkout, Payment modules</li>
+        <li>Identified and reported 20+ defects in JIRA-format with full reproduction steps</li>
+        <li>Performed Regression Testing after each bug fix cycle</li>
+        <li>Applied BVA and Equivalence Partitioning for input validation test cases</li>
+      </ul>
+    </div>
+    <div class="proj-card pc-a">
+      <p class="proj-id pid-a">PROJECT :: 003</p>
+      <p class="proj-title">Selenium Automation – Login &amp; Registration</p>
+      <div class="proj-stack">
+        <span class="proj-chip chip-a">Selenium WebDriver</span><span class="proj-chip chip-a">TestNG</span>
+        <span class="proj-chip chip-a">Java</span><span class="proj-chip chip-a">POM</span>
+      </div>
+      <ul class="proj-bullets">
+        <li>Automated test cases using Selenium WebDriver + Java, reducing manual testing time significantly</li>
+        <li>Structured framework with Page Object Model for reusable, maintainable code</li>
+        <li>Integrated TestNG for grouping, priority, and HTML report generation</li>
+        <li>Cross-browser testing on Chrome and Firefox with ChromeDriver / GeckoDriver</li>
+        <li>Validated positive and negative scenarios with proper assertions</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- EDUCATION -->
+<section id="education">
+  <div class="section-header">
+    <span class="sec-num">// 04</span>
+    <h2 class="sec-title">CREDENTIALS.DB</h2>
+    <div class="sec-line"></div>
+  </div>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <p class="tl-year">2024 – PRESENT</p>
+      <p class="tl-title">Software Testing with Java Automation (SDET)</p>
+      <p class="tl-org">QSpiders Training Institute, Bangalore</p>
+      <p class="tl-detail">Intensive training in Selenium WebDriver, Java-based test scripting, TestNG framework, SQL database validation, STLC, defect life cycle management, and industry-standard QA best practices.</p>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="border-color:var(--cyan);box-shadow:0 0 8px var(--cyan);"></div>
+      <p class="tl-year">2021 – 2023</p>
+      <p class="tl-title">B.Sc. in Computer Science</p>
+      <p class="tl-org">ST Hindu College, Nagercoil</p>
+      <p class="tl-detail">Comprehensive curriculum covering core computer science fundamentals, programming, database management, and software engineering principles.</p>
+      <span class="tl-grade">⭐ 79%</span>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="border-color:var(--amber);box-shadow:0 0 8px var(--amber);"></div>
+      <p class="tl-year">2019</p>
+      <p class="tl-title">Higher Secondary – Computer Science</p>
+      <p class="tl-org">Babuji Memorial H.S School, Manavalakurichi</p>
+      <p class="tl-detail">Specialization in Computer Science stream with practical exposure to programming fundamentals.</p>
+      <span class="tl-grade" style="border-color:rgba(255,179,0,.3);color:var(--amber);">📊 63%</span>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-header">
+    <span class="sec-num">// 05</span>
+    <h2 class="sec-title">CONNECT.SH</h2>
+    <div class="sec-line"></div>
+  </div>
+  <div class="contact-wrap">
+    <div class="contact-info">
+      <div class="contact-item"><span class="ci-icon">📞</span><div><p class="ci-label">Phone</p><p class="ci-val">+91 8925172411</p></div></div>
+      <div class="contact-item"><span class="ci-icon">📧</span><div><p class="ci-label">Email</p><p class="ci-val"><a href="mailto:Naveenmon1997@gmail.com">Naveenmon1997@gmail.com</a></p></div></div>
+      <div class="contact-item"><span class="ci-icon">🔗</span><div><p class="ci-label">LinkedIn</p><p class="ci-val"><a href="https://linkedin.com/in/NaveenLQa" target="_blank">linkedin.com/in/NaveenLQa</a></p></div></div>
+      <div class="contact-item"><span class="ci-icon">📍</span><div><p class="ci-label">Location</p><p class="ci-val">Bangalore, Karnataka, India</p></div></div>
+      <div class="contact-item"><span class="ci-icon">🛂</span><div><p class="ci-label">Passport No.</p><p class="ci-val">AD483789</p></div></div>
+      <div class="contact-item"><span class="ci-icon">⚡</span><div><p class="ci-label">Availability</p><p class="ci-val" style="color:var(--neon-green);">Immediate / Available Now</p></div></div>
+    </div>
+    <div class="int-terminal">
+      <div class="int-titlebar">
+        <div class="term-dot dot-r"></div><div class="term-dot dot-y"></div><div class="term-dot dot-g"></div>
+        <span style="margin-left:.5rem;">interactive_terminal — naveen@qa-engine</span>
+      </div>
+      <div class="int-body">
+        <div id="term-output">
+          <p class="to-line"><span class="to-info">NavOS Terminal v2.6.1</span></p>
+          <p class="to-line"><span class="to-resp">Type <span style="color:var(--cyan)">help</span> for available commands.</span></p>
+          <p class="to-line">&nbsp;</p>
+        </div>
+        <div class="term-input-row">
+          <span class="ti-prompt">naveen@qa ~$&nbsp;</span>
+          <input type="text" id="term-input" placeholder="type a command..." autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span>// NAVEEN_L :: QA_ENGINEER // <span style="color:var(--amber)">Bangalore, India</span></span>
+  <span class="ft-right">BUILD 2026.06.05 &nbsp;|&nbsp; ALL SYSTEMS NOMINAL</span>
+</footer>
+
+<script>
+/* CURSOR */
+const cur = document.getElementById('cursor');
+const dot = document.getElementById('cursor-dot');
+document.addEventListener('mousemove', e => {
+  dot.style.left = e.clientX + 'px'; dot.style.top = e.clientY + 'px';
+  cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px';
+});
+document.querySelectorAll('a,button,.contact-item,.skill-block,.proj-card,.nav-links a').forEach(el => {
+  el.addEventListener('mouseenter', () => { cur.style.width='36px'; cur.style.height='36px'; cur.style.borderColor='var(--cyan)'; });
+  el.addEventListener('mouseleave', () => { cur.style.width='20px'; cur.style.height='20px'; cur.style.borderColor='var(--neon-green)'; });
+});
+
+/* CLOCK */
+function updateClock() {
+  const n = new Date();
+  document.getElementById('live-clock').textContent = [n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');
+}
+setInterval(updateClock, 1000); updateClock();
+
+/* BIOS BOOT */
+const biosLines = [
+  { t:0,    html:'<span class="bios-green">NavOS BIOS v2.26.1  |  Copyright (C) 2026 NavSystems Inc.</span>' },
+  { t:120,  html:'CPU: QA-CORE i9-TESTER @ 3.60GHz (8 Cores / 16 Threads)' },
+  { t:240,  html:'RAM: 16384MB DDR5-5200 &nbsp;[Testing OK]' },
+  { t:360,  html:'&nbsp;' },
+  { t:430,  html:'<span class="bios-amber">Initializing POST sequence...</span>' },
+  { t:560,  html:'Checking CPU registers............... <span class="bios-green">PASS</span>' },
+  { t:680,  html:'Memory test (16384 MB)............... <span class="bios-green">PASS</span>' },
+  { t:800,  html:'Storage controller................... <span class="bios-green">PASS</span>' },
+  { t:920,  html:'Selenium WebDriver Module............ <span class="bios-green">LOADED</span>' },
+  { t:1040, html:'TestNG Engine........................ <span class="bios-green">LOADED</span>' },
+  { t:1160, html:'JIRA Defect Interface................ <span class="bios-green">LOADED</span>' },
+  { t:1280, html:'SQL Connectivity Layer............... <span class="bios-green">LOADED</span>' },
+  { t:1400, html:'Postman API Validator................ <span class="bios-green">LOADED</span>' },
+  { t:1520, html:'&nbsp;' },
+  { t:1580, html:'<span class="bios-amber">Loading NAVOS kernel... </span>' },
+  { t:1660, html:'<div class="bios-bar-wrap"><div class="bios-bar-fill" id="bb"></div><span class="bios-bar-pct" id="bp">0%</span></div>' },
+  { t:2900, html:'&nbsp;' },
+  { t:2960, html:'<span class="bios-cyan">ALL SYSTEMS NOMINAL. Booting NAVEEN_L :: QA_ENGINEER...</span>' },
+];
+
+const biosEl = document.getElementById('bios-content');
+biosLines.forEach((line, i) => {
+  setTimeout(() => {
+    const p = document.createElement('p');
+    p.className = 'bios-line'; p.innerHTML = line.html;
+    biosEl.appendChild(p); biosEl.scrollTop = biosEl.scrollHeight;
+  }, line.t);
+});
+
+setTimeout(() => {
+  const bar = document.getElementById('bb'), pct = document.getElementById('bp');
+  if (!bar) return;
+  let p = 0;
+  const iv = setInterval(() => {
+    p += 2; if (p > 100) { p = 100; clearInterval(iv); }
+    bar.style.width = p + '%'; if (pct) pct.textContent = p + '%';
+  }, 22);
+}, 1700);
+
+setTimeout(() => {
+  const bios = document.getElementById('bios');
+  bios.style.transition = 'opacity .4s'; bios.style.opacity = '0';
+  setTimeout(() => {
+    bios.style.display = 'none';
+    const nav = document.getElementById('navbar');
+    nav.style.transition = 'opacity .4s'; nav.style.opacity = '1'; nav.style.pointerEvents = 'auto';
+    startHeroTyping();
+  }, 420);
+}, 3500);
+
+/* HERO TYPING */
+const heroSeq = [
+  { prompt:true,  text:'whoami', delay:0 },
+  { prompt:false, text:'naveen_l :: qa_engineer :: bangalore, IN', delay:400, color:'#aaa' },
+  { prompt:true,  text:'cat skills.txt | grep --top', delay:900 },
+  { prompt:false, text:'-> Selenium WebDriver  ->  TestNG  ->  Java', delay:400, color:'var(--cyan)' },
+  { prompt:false, text:'-> Manual QA  ->  JIRA  ->  SQL  ->  Postman', delay:200, color:'var(--cyan)' },
+  { prompt:true,  text:'echo $STATUS', delay:900 },
+  { prompt:false, text:'IMMEDIATELY_AVAILABLE | OPEN_TO_WORK=true', delay:400, color:'var(--amber)' },
+  { prompt:true,  text:'', delay:700, cursor:true },
+];
+
+function typeText(el, text, speed, cb) {
+  let i = 0;
+  function step() {
+    if (i <= text.length) { el.textContent = text.slice(0,i); i++; setTimeout(step, speed + Math.random()*30); }
+    else if (cb) cb();
+  }
+  step();
+}
+
+function startHeroTyping() {
+  const body = document.getElementById('hero-term-body');
+  let idx = 0;
+  function nextLine() {
+    if (idx >= heroSeq.length) return;
+    const item = heroSeq[idx++];
+    setTimeout(() => {
+      if (item.prompt && item.text === '' && item.cursor) {
+        const p = document.createElement('p'); p.className = 'term-line';
+        p.innerHTML = '<span class="prompt">naveen@qa ~$ </span><span></span><span class="term-cursor"></span>';
+        body.appendChild(p); return;
+      }
+      if (item.prompt) {
+        const p = document.createElement('p'); p.className = 'term-line';
+        const pr = document.createElement('span'); pr.className = 'prompt'; pr.textContent = 'naveen@qa ~$ ';
+        const cm = document.createElement('span'); cm.className = 'cmd';
+        p.appendChild(pr); p.appendChild(cm); body.appendChild(p);
+        typeText(cm, item.text, 55, nextLine);
+      } else {
+        const p = document.createElement('p'); p.className = 'term-line';
+        p.style.color = item.color || '#aaa'; p.style.paddingLeft = '1rem';
+        p.textContent = item.text; body.appendChild(p); nextLine();
+      }
+    }, item.delay);
+  }
+  nextLine();
+}
+
+/* INTERACTIVE TERMINAL */
+const termInput = document.getElementById('term-input');
+const termOutput = document.getElementById('term-output');
+const commands = {
+  help: () => [
+    {cls:'to-info', text:'╔══════════════════════════════╗'},
+    {cls:'to-info', text:'║  NAVOS TERMINAL — COMMANDS   ║'},
+    {cls:'to-info', text:'╚══════════════════════════════╝'},
+    {cls:'to-ok',   text:'  about     -> career overview'},
+    {cls:'to-ok',   text:'  skills    -> full skill list'},
+    {cls:'to-ok',   text:'  projects  -> project summary'},
+    {cls:'to-ok',   text:'  contact   -> contact details'},
+    {cls:'to-ok',   text:'  email     -> open email client'},
+    {cls:'to-ok',   text:'  linkedin  -> open LinkedIn'},
+    {cls:'to-ok',   text:'  hire      -> why hire Naveen?'},
+    {cls:'to-ok',   text:'  clear     -> clear terminal'},
+    {cls:'to-ok',   text:'  date      -> current date/time'},
+  ],
+  about: () => [
+    {cls:'to-resp', text:'NAME     : Naveen L'},
+    {cls:'to-resp', text:'ROLE     : QA Engineer / Software Tester'},
+    {cls:'to-resp', text:'LOC      : Bangalore, Karnataka, India'},
+    {cls:'to-resp', text:'DOB      : 02 February 2002'},
+    {cls:'to-resp', text:'PASSPORT : AD483789'},
+    {cls:'to-resp', text:'STATUS   : Available Immediately'},
+    {cls:'to-resp', text:'LANGS    : English, Tamil'},
+  ],
+  skills: () => [
+    {cls:'to-info', text:'-- AUTOMATION --'},
+    {cls:'to-ok',   text:'  Selenium WebDriver, TestNG, POM, DDT'},
+    {cls:'to-info', text:'-- LANGUAGES --'},
+    {cls:'to-ok',   text:'  Java, Python (Basic), HTML (Basic)'},
+    {cls:'to-info', text:'-- DATABASE --'},
+    {cls:'to-ok',   text:'  MySQL, Oracle SQL, JDBC'},
+    {cls:'to-info', text:'-- TOOLS --'},
+    {cls:'to-ok',   text:'  JIRA, Postman, Eclipse, Git, Excel'},
+  ],
+  projects: () => [
+    {cls:'to-info', text:'[001] Expense Manager App'},
+    {cls:'to-resp', text:'      Java / Oracle SQL / JDBC / Swing'},
+    {cls:'to-info', text:'[002] Manual QA -- OpenCart E-Commerce'},
+    {cls:'to-resp', text:'      JIRA / Excel / BVA / 50+ Test Cases'},
+    {cls:'to-info', text:'[003] Selenium Automation -- Login/Register'},
+    {cls:'to-resp', text:'      Selenium / TestNG / Java / POM / Cross-Browser'},
+  ],
+  contact: () => [
+    {cls:'to-ok',   text:'Phone    : +91 8925172411'},
+    {cls:'to-ok',   text:'Email    : Naveenmon1997@gmail.com'},
+    {cls:'to-ok',   text:'LinkedIn : linkedin.com/in/NaveenLQa'},
+    {cls:'to-ok',   text:'Location : Bangalore, Karnataka, India'},
+  ],
+  email: () => { window.location.href='mailto:Naveenmon1997@gmail.com'; return [{cls:'to-ok',text:'Opening email client...'}]; },
+  linkedin: () => { window.open('https://linkedin.com/in/NaveenLQa','_blank'); return [{cls:'to-ok',text:'Opening LinkedIn profile...'}]; },
+  hire: () => [
+    {cls:'to-info', text:'>> WHY HIRE NAVEEN? <<'},
+    {cls:'to-ok',   text:'  [+] Certified SDET from QSpiders, Bangalore'},
+    {cls:'to-ok',   text:'  [+] Hands-on Selenium + Java automation'},
+    {cls:'to-ok',   text:'  [+] 50+ test cases & 20+ bugs reported'},
+    {cls:'to-ok',   text:'  [+] Strong STLC / SDLC / defect management'},
+    {cls:'to-ok',   text:'  [+] Immediate joiner — day-1 ready'},
+    {cls:'to-ok',   text:'  [+] Passionate about defect-free software'},
+  ],
+  date: () => [{cls:'to-resp', text: new Date().toString()}],
+  clear: () => { termOutput.innerHTML = ''; return []; },
+};
+
+function addOutput(lines) {
+  lines.forEach(line => {
+    const p = document.createElement('p');
+    p.className = 'to-line ' + (line.cls||'to-resp');
+    p.textContent = line.text;
+    termOutput.appendChild(p);
+  });
+  termOutput.parentElement.scrollTop = termOutput.parentElement.scrollHeight;
+}
+
+termInput.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const raw = termInput.value.trim(); termInput.value = '';
+  if (!raw) return;
+  const echo = document.createElement('p'); echo.className = 'to-line';
+  echo.innerHTML = '<span class="to-prompt">naveen@qa ~$ </span><span class="to-cmd">' + raw + '</span>';
+  termOutput.appendChild(echo);
+  const cmd = raw.toLowerCase().split(' ')[0];
+  if (commands[cmd]) { const out = commands[cmd](); if (out && out.length) addOutput(out); }
+  else addOutput([{cls:'to-err', text:'bash: '+cmd+': command not found'},{cls:'to-resp',text:"Type 'help' for available commands."}]);
+  const sp = document.createElement('p'); sp.innerHTML = '&nbsp;'; termOutput.appendChild(sp);
+  termOutput.parentElement.scrollTop = termOutput.parentElement.scrollHeight;
+});
+document.querySelector('.int-terminal').addEventListener('click', () => termInput.focus());
+</script>
+</body>
+</html>
